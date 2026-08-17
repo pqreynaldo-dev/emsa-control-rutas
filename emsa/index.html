@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMSA Cochabamba — Control de Rutas</title>
+  <meta name="description" content="Sistema de registro y control de rutas de recolección para EMSA Cochabamba." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --ink:#10242B;
+      --petrol:#0E5A63;
+      --petrol-deep:#083F46;
+      --amber:#F4A421;
+      --amber-soft:#FFF3DD;
+      --concrete:#EAECEE;
+      --surface:#FFFFFF;
+      --line:#D3D8DB;
+      --muted:#5E6B70;
+      --green:#2E7D5B;
+      --blue:#2C6E8F;
+      --shadow:0 1px 2px rgba(16,36,43,.06),0 8px 24px rgba(16,36,43,.06);
+      --radius:14px;
+      --display:'Archivo',system-ui,sans-serif;
+      --body:'IBM Plex Sans',system-ui,sans-serif;
+      --mono:'IBM Plex Mono',ui-monospace,monospace;
+    }
+    *{box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{
+      margin:0;font-family:var(--body);color:var(--ink);
+      background:var(--concrete);line-height:1.5;-webkit-font-smoothing:antialiased;
+    }
+    a{color:inherit;text-decoration:none;}
+    h1,h2,h3{font-family:var(--display);margin:0;line-height:1.05;letter-spacing:-.01em;}
+    .wrap{max-width:1120px;margin:0 auto;padding:0 22px;}
+    .eyebrow{
+      font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;
+      text-transform:uppercase;color:var(--petrol);
+    }
+
+    /* ---------- Header ---------- */
+    header.site{
+      position:sticky;top:0;z-index:50;background:rgba(234,236,238,.86);
+      backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+    }
+    .bar{display:flex;align-items:center;gap:18px;height:64px;}
+    .brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:800;}
+    .brand .mark{
+      width:34px;height:34px;border-radius:9px;background:var(--petrol);
+      display:grid;place-items:center;color:#fff;flex:none;box-shadow:var(--shadow);
+    }
+    .brand .mark svg{width:20px;height:20px;}
+    .brand b{font-size:19px;letter-spacing:.02em;}
+    .brand span{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+    nav.main{margin-left:auto;display:flex;gap:6px;}
+    nav.main a{
+      font-size:14px;font-weight:500;color:var(--muted);padding:8px 12px;border-radius:8px;
+    }
+    nav.main a:hover{color:var(--ink);background:rgba(14,90,99,.08);}
+    .status-chip{
+      display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;
+      font-weight:600;color:var(--petrol-deep);background:var(--surface);
+      border:1px solid var(--line);padding:7px 12px;border-radius:999px;
+    }
+    .dot-live{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(46,125,91,.6);animation:pulse 2.4s infinite;}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,125,91,.5);}70%{box-shadow:0 0 0 7px rgba(46,125,91,0);}100%{box-shadow:0 0 0 0 rgba(46,125,91,0);}}
+    .menu-toggle{display:none;}
+
+    /* ---------- Hero ---------- */
+    .hero{padding:64px 0 30px;}
+    .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:end;}
+    .hero h1{font-size:clamp(34px,5vw,58px);font-weight:900;}
+    .hero h1 em{font-style:normal;color:var(--petrol);}
+    .hero p.lead{font-size:18px;color:var(--muted);max-width:46ch;margin:18px 0 26px;}
+    .cta-row{display:flex;flex-wrap:wrap;gap:12px;}
+    .btn{
+      font-family:var(--body);font-size:15px;font-weight:600;cursor:pointer;
+      border-radius:10px;padding:13px 20px;border:1px solid transparent;transition:transform .12s,box-shadow .12s,background .12s;
+    }
+    .btn:active{transform:translateY(1px);}
+    .btn-primary{background:var(--petrol);color:#fff;box-shadow:var(--shadow);}
+    .btn-primary:hover{background:var(--petrol-deep);}
+    .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line);}
+    .btn-ghost:hover{border-color:var(--petrol);color:var(--petrol);}
+
+    .snapshot{
+      background:var(--ink);color:#EAF1F2;border-radius:var(--radius);padding:22px 22px 18px;
+      box-shadow:var(--shadow);position:relative;overflow:hidden;
+    }
+    .snapshot::before{content:"";position:absolute;inset:0;background:
+      radial-gradient(120% 120% at 100% 0,rgba(244,164,33,.14),transparent 55%);}
+    .snapshot .sn-top{display:flex;justify-content:space-between;align-items:center;position:relative;}
+    .snapshot .sn-top small{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8FB0B4;}
+    .snapshot .beacon{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 0 rgba(244,164,33,.6);animation:beacon 1.8s infinite;}
+    @keyframes beacon{0%{box-shadow:0 0 0 0 rgba(244,164,33,.55);}70%{box-shadow:0 0 0 9px rgba(244,164,33,0);}100%{box-shadow:0 0 0 0 rgba(244,164,33,0);}}
+    .sn-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px;position:relative;}
+    .sn-metrics .m b{font-family:var(--display);font-weight:800;font-size:32px;display:block;line-height:1;}
+    .sn-metrics .m span{font-size:12px;color:#9DBBBE;}
+    .sn-foot{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.12);font-family:var(--mono);font-size:12px;color:#9DBBBE;position:relative;}
+
+    /* ---------- Section frame ---------- */
+    section.block{padding:52px 0;}
+    .head-2{max-width:60ch;margin-bottom:26px;}
+    .head-2 h2{font-size:clamp(26px,3.4vw,38px);font-weight:800;margin-top:8px;}
+    .head-2 p{color:var(--muted);margin:10px 0 0;font-size:16px;}
+
+    /* ---------- Registro + Tablero ---------- */
+    .console{
+      display:grid;grid-template-columns:340px 1fr;gap:22px;align-items:start;
+    }
+    .panel{
+      background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .panel > .p-head{
+      padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;
+    }
+    .panel > .p-head h3{font-size:16px;font-weight:700;}
+    .p-body{padding:18px;}
+    .field{margin-bottom:14px;}
+    .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+    .field input,.field select{
+      width:100%;font-family:var(--body);font-size:14px;padding:11px 12px;color:var(--ink);
+      background:#fff;border:1px solid var(--line);border-radius:9px;transition:border-color .12s,box-shadow .12s;
+    }
+    .field input:focus,.field select:focus{
+      outline:none;border-color:var(--petrol);box-shadow:0 0 0 3px rgba(14,90,99,.14);
+    }
+    .field .hint{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:5px;}
+    .codebox{
+      font-family:var(--mono);font-weight:600;font-size:15px;color:var(--petrol-deep);
+      background:var(--amber-soft);border:1px dashed var(--amber);border-radius:9px;padding:11px 12px;text-align:center;letter-spacing:.06em;
+    }
+    .form-msg{font-size:13px;margin-top:4px;min-height:18px;color:var(--muted);}
+    .form-msg.err{color:#B23A3A;font-weight:600;}
+
+    /* board */
+    .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .filters select{
+      font-family:var(--body);font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);
+    }
+    .count-pill{
+      font-family:var(--mono);font-size:12px;font-weight:600;color:var(--petrol-deep);
+      background:rgba(14,90,99,.08);border-radius:999px;padding:5px 11px;
+    }
+    .table-scroll{overflow-x:auto;}
+    table.board{width:100%;border-collapse:collapse;min-width:640px;}
+    table.board th{
+      text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--muted);font-weight:600;padding:10px 14px;border-bottom:1px solid var(--line);
+    }
+    table.board td{padding:13px 14px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle;}
+    table.board tr:last-child td{border-bottom:none;}
+    table.board tbody tr:hover{background:#F7F9F9;}
+    .rcode{font-family:var(--mono);font-weight:600;color:var(--petrol-deep);}
+    .plate{font-family:var(--mono);font-size:13px;color:var(--ink);}
+    .badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;white-space:nowrap;}
+    .badge .b-dot{width:7px;height:7px;border-radius:50%;}
+    .badge.enruta{background:var(--amber-soft);color:#9A6206;}
+    .badge.enruta .b-dot{background:var(--amber);animation:beacon 1.8s infinite;}
+    .badge.prog{background:#EEF1F2;color:var(--muted);}
+    .badge.prog .b-dot{background:#9AA6AB;}
+    .badge.done{background:rgba(46,125,91,.12);color:var(--green);}
+    .badge.done .b-dot{background:var(--green);}
+    .row-del{
+      border:none;background:transparent;color:#A2ABAF;cursor:pointer;font-size:16px;line-height:1;
+      padding:6px;border-radius:7px;
+    }
+    .row-del:hover{background:#FBEBEB;color:#B23A3A;}
+    .empty-row td{text-align:center;color:var(--muted);padding:30px 14px;font-size:14px;}
+
+    /* ---------- Features ---------- */
+    .feat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+    .feat{
+      background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);
+    }
+    .feat .ic{width:38px;height:38px;border-radius:10px;background:var(--amber-soft);display:grid;place-items:center;color:var(--petrol);margin-bottom:14px;}
+    .feat .ic svg{width:20px;height:20px;}
+    .feat h3{font-size:16px;font-weight:700;margin-bottom:6px;}
+    .feat p{font-size:14px;color:var(--muted);margin:0;}
+
+    /* ---------- Cobertura ---------- */
+    .zonas{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
+    .zona{
+      background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+      display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);
+    }
+    .zona .zn{font-weight:600;font-size:15px;}
+    .zona .zc{font-family:var(--mono);font-weight:600;color:var(--petrol);font-size:14px;background:rgba(14,90,99,.08);padding:3px 9px;border-radius:8px;}
+
+    /* ---------- Footer ---------- */
+    footer.site{background:var(--ink);color:#C9D6D8;margin-top:20px;}
+    .foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:30px;padding:46px 0 26px;}
+    footer .brand b{color:#fff;}
+    footer .brand span{color:#7E9598;}
+    footer p{font-size:14px;color:#9DBBBE;max-width:38ch;margin:14px 0 0;}
+    footer h4{font-family:var(--display);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#7E9598;margin:0 0 12px;}
+    footer ul{list-style:none;margin:0;padding:0;}
+    footer li{font-size:14px;margin-bottom:8px;color:#B9CBCD;}
+    footer li.mono{font-family:var(--mono);font-size:13px;}
+    .foot-bottom{border-top:1px solid rgba(255,255,255,.1);padding:16px 0;font-size:12px;color:#7E9598;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+    /* ---------- Toast ---------- */
+    .toast{
+      position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+      background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:500;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:80;
+      display:flex;align-items:center;gap:9px;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    .toast .t-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);}
+
+    /* ---------- Responsive ---------- */
+    @media(max-width:920px){
+      .hero-grid{grid-template-columns:1fr;gap:26px;}
+      .console{grid-template-columns:1fr;}
+      .feat-grid{grid-template-columns:repeat(2,1fr);}
+      .foot-grid{grid-template-columns:1fr 1fr;}
+      nav.main{display:none;}
+    }
+    @media(max-width:560px){
+      .feat-grid{grid-template-columns:1fr;}
+      .foot-grid{grid-template-columns:1fr;}
+      .sn-metrics{grid-template-columns:repeat(3,1fr);}
+      .hero{padding:44px 0 20px;}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *{animation:none !important;scroll-behavior:auto;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site">
+    <div class="wrap bar">
+      <a class="brand" href="#inicio" aria-label="EMSA inicio">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h13V6H3zM16 9h4l1 4v4h-5"/><circle cx="7" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/></svg>
+        </span>
+        <span>
+          <b>EMSA</b><br><span>Control de Rutas</span>
+        </span>
+      </a>
+      <nav class="main" aria-label="Principal">
+        <a href="#registro">Registro</a>
+        <a href="#tablero">Tablero</a>
+        <a href="#sistema">Sistema</a>
+        <a href="#cobertura">Cobertura</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <span class="status-chip"><span class="dot-live" aria-hidden="true"></span> <span id="turno-chip">Turno mañana</span></span>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main id="inicio">
+    <section class="hero wrap">
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow">Empresa Municipal de Servicio de Aseo — Cochabamba</span>
+          <h1>Registro y <em>control de rutas</em> de recolección.</h1>
+          <p class="lead">Registra cada ruta, asigna vehículo y cuadrilla, define el turno y sigue el estado del servicio en toda la ciudad desde un solo tablero.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#registro">Registrar una ruta</a>
+            <a class="btn btn-ghost" href="#tablero">Ver el tablero</a>
+          </div>
+        </div>
+        <aside class="snapshot" aria-label="Resumen del servicio">
+          <div class="sn-top">
+            <small>Servicio del día · <span id="hoy-fecha">—</span></small>
+            <span class="beacon" aria-hidden="true"></span>
+          </div>
+          <div class="sn-metrics">
+            <div class="m"><b id="mt-total">0</b><span>rutas registradas</span></div>
+            <div class="m"><b id="mt-enruta">0</b><span>en ruta ahora</span></div>
+            <div class="m"><b id="mt-zonas">0</b><span>zonas cubiertas</span></div>
+          </div>
+          <div class="sn-foot" id="sn-turno">Turno actual: —</div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Registro + Tablero -->
+    <section class="block wrap" id="registro">
+      <div class="head-2">
+        <span class="eyebrow">Operación</span>
+        <h2>Registra una ruta y sigue su estado en vivo</h2>
+        <p>Cada ruta recibe un código, se asigna a un vehículo y una cuadrilla, y entra al tablero con su estado. Los datos de esta demo se guardan solo en tu navegador durante la sesión.</p>
+      </div>
+
+      <div class="console">
+        <!-- Panel registro -->
+        <div class="panel">
+          <div class="p-head"><h3>Registrar nueva ruta</h3></div>
+          <div class="p-body">
+            <form id="ruta-form" novalidate>
+              <div class="field">
+                <label for="f-codigo">Código de ruta</label>
+                <div class="codebox" id="f-codigo">R-05</div>
+                <div class="hint">Se genera automáticamente.</div>
+              </div>
+              <div class="field">
+                <label for="f-zona">Zona</label>
+                <select id="f-zona">
+                  <option value="">Selecciona una zona</option>
+                  <option>Cercado</option>
+                  <option>Zona Norte</option>
+                  <option>Zona Sud</option>
+                  <option>Queru Queru</option>
+                  <option>Cala Cala</option>
+                  <option>Sarco</option>
+                  <option>Tupuraya</option>
+                  <option>Villa Busch</option>
+                  <option>Alalay</option>
+                  <option>Temporal</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="f-placa">Vehículo (placa)</label>
+                <input id="f-placa" type="text" placeholder="1234-ABC" maxlength="9" />
+              </div>
+              <div class="field">
+                <label for="f-cuadrilla">Cuadrilla</label>
+                <select id="f-cuadrilla">
+                  <option value="">Asignar cuadrilla</option>
+                  <option>Cuadrilla A</option>
+                  <option>Cuadrilla B</option>
+                  <option>Cuadrilla C</option>
+                  <option>Cuadrilla D</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="f-turno">Turno</label>
+                <select id="f-turno">
+                  <option value="">Selecciona el turno</option>
+                  <option value="Mañana">Mañana · 06:00–12:00</option>
+                  <option value="Tarde">Tarde · 12:00–18:00</option>
+                  <option value="Noche">Noche · 18:00–00:00</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="f-dias">Frecuencia</label>
+                <select id="f-dias">
+                  <option>Lun · Mié · Vie</option>
+                  <option>Mar · Jue · Sáb</option>
+                  <option>Diario</option>
+                  <option>Fin de semana</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">Registrar ruta</button>
+              <div class="form-msg" id="form-msg" role="status"></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Panel tablero -->
+        <div class="panel" id="tablero">
+          <div class="p-head">
+            <h3>Tablero de rutas</h3>
+            <span class="count-pill" id="count-pill">0 rutas</span>
+          </div>
+          <div class="p-body" style="padding-bottom:6px;">
+            <div class="filters">
+              <label for="flt-turno" style="font-size:13px;font-weight:600;">Filtrar:</label>
+              <select id="flt-turno" aria-label="Filtrar por turno">
+                <option value="">Todos los turnos</option>
+                <option>Mañana</option><option>Tarde</option><option>Noche</option>
+              </select>
+              <select id="flt-zona" aria-label="Filtrar por zona">
+                <option value="">Todas las zonas</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="board">
+              <thead>
+                <tr>
+                  <th>Código</th><th>Zona</th><th>Vehículo</th><th>Cuadrilla</th>
+                  <th>Turno</th><th>Frecuencia</th><th>Estado</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="board-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="block wrap" id="sistema">
+      <div class="head-2">
+        <span class="eyebrow">Qué permite el sistema</span>
+        <h2>Todo el servicio de recolección, ordenado</h2>
+      </div>
+      <div class="feat-grid">
+        <div class="feat">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"/></svg></span>
+          <h3>Registro por zona</h3>
+          <p>Da de alta cada ruta con su zona, código y frecuencia sin planillas sueltas.</p>
+        </div>
+        <div class="feat">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h13V6H3zM16 9h4l1 4v4h-5"/><circle cx="7" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/></svg></span>
+          <h3>Vehículo y cuadrilla</h3>
+          <p>Asigna la placa del camión y el equipo responsable a cada recorrido.</p>
+        </div>
+        <div class="feat">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+          <h3>Seguimiento de estado</h3>
+          <p>Distingue de un vistazo qué rutas están programadas, en ruta o completadas.</p>
+        </div>
+        <div class="feat">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6"/></svg></span>
+          <h3>Reportes por turno</h3>
+          <p>Cuenta rutas activas y cobertura por zona para planificar el siguiente turno.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cobertura -->
+    <section class="block wrap" id="cobertura">
+      <div class="head-2">
+        <span class="eyebrow">Cobertura</span>
+        <h2>Rutas activas por zona</h2>
+        <p>Se actualiza con cada ruta que registras en el tablero.</p>
+      </div>
+      <div class="zonas" id="zonas-grid"></div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site" id="contacto">
+    <div class="wrap foot-grid">
+      <div>
+        <a class="brand" href="#inicio">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h13V6H3zM16 9h4l1 4v4h-5"/><circle cx="7" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/></svg>
+          </span>
+          <span><b>EMSA</b><br><span>Control de Rutas</span></span>
+        </a>
+        <p>Sistema de registro y control de rutas de recolección de la Empresa Municipal de Servicio de Aseo — Cochabamba, Bolivia.</p>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <ul>
+          <li class="mono">📍 Av. Aroma, Cochabamba</li>
+          <li class="mono">☎ (4) 000-0000</li>
+          <li class="mono">✉ rutas@emsa-cbba.bo</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Operación</h4>
+        <ul>
+          <li>Turno mañana · 06:00–12:00</li>
+          <li>Turno tarde · 12:00–18:00</li>
+          <li>Turno noche · 18:00–00:00</li>
+        </ul>
+      </div>
+    </div>
+    <div class="wrap foot-bottom">
+      <span>© 2026 EMSA Cochabamba — Todos los derechos reservados.</span>
+      <span>Proyecto académico · Reynaldo Perez Queque</span>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"><span class="t-dot"></span><span id="toast-text">Ruta registrada</span></div>
+
+  <script>
+    // ---- Datos iniciales (demo, en memoria) ----
+    let rutas = [
+      {codigo:"R-01", zona:"Cercado",     placa:"1234-ABC", cuadrilla:"Cuadrilla A", turno:"Mañana", dias:"Lun · Mié · Vie",  estado:"En ruta"},
+      {codigo:"R-02", zona:"Zona Norte",  placa:"5678-XYZ", cuadrilla:"Cuadrilla B", turno:"Tarde",  dias:"Mar · Jue · Sáb",  estado:"Programada"},
+      {codigo:"R-03", zona:"Zona Sud",    placa:"9012-DEF", cuadrilla:"Cuadrilla C", turno:"Noche",  dias:"Diario",           estado:"Completada"},
+      {codigo:"R-04", zona:"Queru Queru", placa:"3456-GHI", cuadrilla:"Cuadrilla A", turno:"Mañana", dias:"Lun · Mié · Vie",  estado:"En ruta"}
+    ];
+    let contador = 5;
+
+    const zonasLista = ["Cercado","Zona Norte","Zona Sud","Queru Queru","Cala Cala","Sarco","Tupuraya","Villa Busch","Alalay","Temporal"];
+
+    const $ = (s)=>document.querySelector(s);
+    const boardBody = $("#board-body");
+    const fltTurno = $("#flt-turno");
+    const fltZona  = $("#flt-zona");
+
+    function badgeClass(e){ return e==="En ruta"?"enruta": e==="Completada"?"done":"prog"; }
+
+    function nextCodigo(){ return "R-" + String(contador).padStart(2,"0"); }
+
+    function render(){
+      // filtros
+      const t = fltTurno.value, z = fltZona.value;
+      const vis = rutas.filter(r => (!t || r.turno===t) && (!z || r.zona===z));
+
+      boardBody.innerHTML = "";
+      if(vis.length === 0){
+        boardBody.innerHTML = '<tr class="empty-row"><td colspan="8">No hay rutas con este filtro. Registra una nueva o cambia el filtro.</td></tr>';
+      } else {
+        vis.forEach((r)=>{
+          const idx = rutas.indexOf(r);
+          const tr = document.createElement("tr");
+          tr.innerHTML =
+            '<td class="rcode">'+r.codigo+'</td>'+
+            '<td>'+r.zona+'</td>'+
+            '<td class="plate">'+r.placa+'</td>'+
+            '<td>'+r.cuadrilla+'</td>'+
+            '<td>'+r.turno+'</td>'+
+            '<td>'+r.dias+'</td>'+
+            '<td><span class="badge '+badgeClass(r.estado)+'"><span class="b-dot"></span>'+r.estado+'</span></td>'+
+            '<td><button class="row-del" data-i="'+idx+'" title="Quitar ruta" aria-label="Quitar ruta '+r.codigo+'">✕</button></td>';
+          boardBody.appendChild(tr);
+        });
+      }
+
+      // contadores
+      $("#count-pill").textContent = vis.length + (vis.length===1?" ruta":" rutas");
+      $("#mt-total").textContent  = rutas.length;
+      $("#mt-enruta").textContent = rutas.filter(r=>r.estado==="En ruta").length;
+      $("#mt-zonas").textContent  = new Set(rutas.map(r=>r.zona)).size;
+      $("#f-codigo").textContent  = nextCodigo();
+
+      renderZonas();
+    }
+
+    function renderZonas(){
+      const grid = $("#zonas-grid");
+      grid.innerHTML = "";
+      zonasLista.forEach(z=>{
+        const n = rutas.filter(r=>r.zona===z).length;
+        if(n===0) return;
+        const div = document.createElement("div");
+        div.className = "zona";
+        div.innerHTML = '<span class="zn">'+z+'</span><span class="zc">'+n+(n===1?" ruta":" rutas")+'</span>';
+        grid.appendChild(div);
+      });
+      if(grid.children.length===0){
+        grid.innerHTML = '<div class="zona"><span class="zn" style="color:var(--muted)">Aún no hay rutas registradas</span></div>';
+      }
+    }
+
+    // quitar ruta
+    boardBody.addEventListener("click",(e)=>{
+      const btn = e.target.closest(".row-del");
+      if(!btn) return;
+      const i = parseInt(btn.dataset.i,10);
+      const cod = rutas[i].codigo;
+      rutas.splice(i,1);
+      render();
+      showToast("Ruta "+cod+" quitada del tablero");
+    });
+
+    // filtros
+    fltTurno.addEventListener("change",render);
+    fltZona.addEventListener("change",render);
+
+    // llenar filtro de zonas
+    zonasLista.forEach(z=>{
+      const o=document.createElement("option"); o.textContent=z; fltZona.appendChild(o);
+    });
+
+    // registrar
+    $("#ruta-form").addEventListener("submit",(e)=>{
+      e.preventDefault();
+      const zona=$("#f-zona").value, placa=$("#f-placa").value.trim(),
+            cuad=$("#f-cuadrilla").value, turno=$("#f-turno").value, dias=$("#f-dias").value;
+      const msg=$("#form-msg");
+
+      if(!zona||!placa||!cuad||!turno){
+        msg.textContent="Completa zona, vehículo, cuadrilla y turno para registrar la ruta.";
+        msg.className="form-msg err";
+        return;
+      }
+      rutas.push({
+        codigo: nextCodigo(), zona, placa, cuadrilla:cuad, turno, dias, estado:"Programada"
+      });
+      contador++;
+      msg.textContent="Ruta "+rutas[rutas.length-1].codigo+" registrada y agregada al tablero.";
+      msg.className="form-msg";
+      e.target.reset();
+      fltTurno.value=""; fltZona.value="";
+      render();
+      showToast("Ruta "+rutas[rutas.length-1].codigo+" registrada");
+    });
+
+    // toast
+    let toastTimer;
+    function showToast(text){
+      $("#toast-text").textContent=text;
+      const t=$("#toast"); t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer=setTimeout(()=>t.classList.remove("show"),2600);
+    }
+
+    // fecha + turno actual
+    (function initFecha(){
+      const dias=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+      const meses=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+      const d=new Date();
+      $("#hoy-fecha").textContent = dias[d.getDay()]+" "+d.getDate()+" "+meses[d.getMonth()];
+      const h=d.getHours();
+      let turno = (h>=6&&h<12)?"mañana":(h>=12&&h<18)?"tarde":"noche";
+      $("#turno-chip").textContent="Turno "+turno;
+      $("#sn-turno").textContent="Turno actual: "+turno.charAt(0).toUpperCase()+turno.slice(1);
+    })();
+
+    render();
+  </script>
+</body>
+</html>
