@@ -27,3 +27,4 @@ Abre `index.html` en tu navegador, o publícalo con GitHub Pages.
 ## Autor
 
 Reynaldo Perez Queque
+INCOS Cochabamba - Gestión de Software
